@@ -9,7 +9,6 @@ public class CreateEmployeeHandler implements BuzzHandler<CreateUser> {
     @Override
     public void handle(CreateUser message) {
         System.out.println(message.getId());
-
         System.out.println(message.getName());
     }
 }

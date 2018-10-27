@@ -8,7 +8,7 @@ import tambunan.messages.CreateUser;
 import tambunan.services.EmployeeService;
 
 @RestController
-public class GreetingController {
+public class EmployeeController {
 
     @Autowired
     private BootBuzz _buzz;

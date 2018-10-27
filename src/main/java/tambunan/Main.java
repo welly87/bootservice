@@ -18,7 +18,11 @@ public class Main {
             @Override
             public void run() {
                 MessageListeners listener = new MessageListeners();
-                listener.start();
+                try {
+                    listener.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
     }
