@@ -1,4 +1,4 @@
-package tambunan.domain;
+package com.tambunan.domain;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -13,6 +13,15 @@ public class Employee {
     private Long id;
     private String name;
     private boolean hasAccessDoor;
+
+    public Employee() {
+
+    }
+
+    public Employee(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 
     public Long getId() {
         return id;
@@ -34,8 +43,12 @@ public class Employee {
         hasAccessDoor = true;
     }
 
-    public void receiveSalary(double i) {
+    public boolean isHasAccessDoor() {
+        return hasAccessDoor;
+    }
 
+    public void setHasAccessDoor(boolean hasAccessDoor) {
+        this.hasAccessDoor = hasAccessDoor;
     }
 
     public void resign() {

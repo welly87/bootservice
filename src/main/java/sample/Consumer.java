@@ -10,11 +10,11 @@ import java.util.Properties;
 public class Consumer {
     public static void main(String[] args) {
         Properties props = new Properties();
-        props.put("bootstrap.servers", "cloudera-01.tambunan.com:9092");
+        props.put("bootstrap.servers", "cloudera-01.com.tambunan.com:9092");
         props.put("group.id", "ConsumerSimpleType");
         props.put("key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer");
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://cloudera-01.tambunan.com:8081");
+        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://cloudera-01.com.tambunan.com:8081");
 
         KafkaConsumer<Integer, String> consumer = new KafkaConsumer<Integer, String>(props);
         consumer.subscribe(Collections.singletonList("tambunanw"));

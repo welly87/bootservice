@@ -1,6 +1,6 @@
-package tambunan;
+package com.tambunan;
 
-import tambunan.bus.MessageListeners;
+import com.tambunan.bus.MessageListeners;
 import org.springframework.boot.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

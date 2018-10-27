@@ -1,4 +1,4 @@
-{"namespace": "tambunan",
+{"namespace": "com.tambunan",
  "type": "record",
  "name": "User",
  "fields": [

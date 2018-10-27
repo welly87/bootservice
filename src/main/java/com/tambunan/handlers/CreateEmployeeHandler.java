@@ -1,7 +1,7 @@
-package tambunan.handlers;
+package com.tambunan.handlers;
 
-import tambunan.messages.CreateUser;
-import tambunan.bus.BuzzHandler;
+import com.tambunan.messages.CreateUser;
+import com.tambunan.bus.BuzzHandler;
 import org.springframework.stereotype.Component;
 
 @Component

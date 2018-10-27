@@ -1,4 +1,4 @@
-package tambunan.bus;
+package com.tambunan.bus;
 
 public interface BuzzMessage {
 

@@ -1,11 +1,11 @@
-package tambunan.controllers;
+package com.tambunan.controllers;
 
-import tambunan.bus.BootBuzz;
+import com.tambunan.bus.BootBuzz;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import tambunan.messages.CreateUser;
-import tambunan.services.EmployeeService;
+import com.tambunan.messages.CreateUser;
+import com.tambunan.services.EmployeeService;
 
 @RestController
 public class EmployeeController {
