@@ -1,3 +1,6 @@
+package sample;
+
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 
@@ -6,16 +9,17 @@ import java.util.Properties;
 
 public class Consumer {
     public static void main(String[] args) {
-        var props = new Properties();
+        Properties props = new Properties();
         props.put("bootstrap.servers", "cloudera-01.tambunan.com:9092");
         props.put("group.id", "ConsumerSimpleType");
         props.put("key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer");
         props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://cloudera-01.tambunan.com:8081");
 
-        var consumer = new KafkaConsumer<Integer, String>(props);
+        KafkaConsumer<Integer, String> consumer = new KafkaConsumer<Integer, String>(props);
         consumer.subscribe(Collections.singletonList("tambunanw"));
         while (true) {
-            var records = consumer.poll(Long.MAX_VALUE);
+            ConsumerRecords<Integer, String> records = consumer.poll(Long.MAX_VALUE);
             process(records); // application-specific processing
             consumer.commitSync();
         }
