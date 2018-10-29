@@ -1,94 +1,110 @@
 package com.tambunan.bus;
 
-import com.google.gson.Gson;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import javax.annotation.PostConstruct;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import com.google.gson.Gson;
+
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
 @Service
 public class BootBuzz implements Bus {
-    private KafkaProducer<String, String> publisher;
+	private KafkaProducer<String, String> publisher;
 
-    private Gson gson = new Gson();
+	private Gson gson = new Gson();
 
-    private MessageListeners listeners = new MessageListeners();
+	private MessageListeners listeners = new MessageListeners();
 
-    @Value("${kafka.servers}")
-    private String servers;
+	@Value("${bootservice.kafka.servers}")
+	private String servers;
 
-    @Value("${kafka.schemaregistry.url}")
-    private String schemaUrl;
+	@Value("${bootservice.kafka.schemaregistry.url}")
+	private String schemaUrl;
 
-    public BootBuzz() {
-        Properties props = new Properties();
+	private static final Logger log = LoggerFactory.getLogger(BootBuzz.class);
 
-        // TODO need to refactor this to properties file
-        props.put("bootstrap.servers", "cloudera-01.com.tambunan.com:9092");
-        props.put(ProducerConfig.ACKS_CONFIG, "all");
-        props.put(ProducerConfig.RETRIES_CONFIG, 0);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://cloudera-01.com.tambunan.com:8081");
+	public BootBuzz() {
 
-        publisher = new KafkaProducer<String, String>(props);
-    }
+	}
 
-    @Override
-    public <T extends BuzzMessage> void subscribe(String eventName, BuzzHandler<T> handler) {
-        listeners.add(eventName, handler);
-    }
+	@PostConstruct
+	public void postConstruct() {
+		Properties props = new Properties();
 
-    @Override
-    public <T extends BuzzMessage> void handleCommand(String commandName, BuzzHandler<T> handler) {
-        listeners.add(commandName, handler);
-    }
+		log.debug("Bootstrapping : " + servers);
 
-    @Override
-    public void send(String destination, BuzzMessage cmd) {
+		// TODO need to refactor this to properties file
+		props.put("bootstrap.servers", servers);
+		props.put(ProducerConfig.ACKS_CONFIG, "all");
+		props.put(ProducerConfig.RETRIES_CONFIG, 0);
+		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+		props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
 
-        Header header = new RecordHeader("message-type", cmd.getClass().getName().getBytes());
+		publisher = new KafkaProducer<String, String>(props);
+	}
 
-        List<Header> headers = new ArrayList<>();
-        headers.add(header);
+	@Override
+	public <T extends BuzzMessage> void subscribe(String eventName, BuzzHandler<T> handler) {
+		listeners.add(eventName, handler);
+	}
 
-        publisher.send(new ProducerRecord<String, String>(destination, 0, "", serialize(cmd), headers));
+	@Override
+	public <T extends BuzzMessage> void handleCommand(String commandName, BuzzHandler<T> handler) {
+		listeners.add(commandName, handler);
+	}
 
-        System.out.println("send : " + cmd.getClass());
-    }
+	@Override
+	public void send(String destination, BuzzMessage cmd) {
 
-    private String serialize(BuzzMessage message) {
-        return gson.toJson(message);
-    }
+		Header header = new RecordHeader("message-type", cmd.getClass().getName().getBytes());
 
-    @Override
-    public void publish(BuzzMessage event) {
+		List<Header> headers = new ArrayList<>();
+		headers.add(header);
 
-        Header header = new RecordHeader("message-type", event.getClass().getName().getBytes());
+		publisher.send(new ProducerRecord<String, String>(destination, 0, "", serialize(cmd), headers));
 
-        List<Header> headers = new ArrayList<>();
-        headers.add(header);
+		System.out.println("send : " + cmd.getClass());
+	}
 
-        publisher.send(new ProducerRecord<String, String>(event.getClass().getName(), 0, "", serialize(event), headers));
+	private String serialize(BuzzMessage message) {
+		return gson.toJson(message);
+	}
 
-        System.out.println("send : " + event.getClass());
-    }
+	@Override
+	public void publish(BuzzMessage event) {
 
-    @Override
-    public void start() {
-        try {
-            listeners.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+		Header header = new RecordHeader("message-type", event.getClass().getName().getBytes());
+
+		List<Header> headers = new ArrayList<>();
+		headers.add(header);
+
+		publisher
+				.send(new ProducerRecord<String, String>(event.getClass().getName(), 0, "", serialize(event), headers));
+
+		System.out.println("send : " + event.getClass());
+	}
+
+	@Override
+	public void start() {
+		try {
+			listeners.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
