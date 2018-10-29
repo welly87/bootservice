@@ -1,72 +1,75 @@
 package com.tambunan.bus;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
-import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Properties;
+
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.beans.factory.annotation.Autowired;
-import com.tambunan.domain.Employee;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Type;
-import java.util.*;
+import com.google.gson.Gson;
+
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
 @Component
 public class MessageListeners {
-    @Value("${kafka.servers}")
-    private String servers;
+	
+	@Value("${bootservice.kafka.servers}")
+	private String servers;
 
-    Gson gson = new Gson();
+	@Value("${bootservice.kafka.schemaregistry.url}")
+	private String schemaUrl;
 
-    // TODO .. we need to change this to Map of <string, List>
-    private HashMap<String, BuzzHandler<? extends BuzzMessage>> _handlerMaps = new HashMap<>();
+	Gson gson = new Gson();
 
-    public void start() throws Exception {
-        Properties props = new Properties();
+	// TODO .. we need to change this to Map of <string, List>
+	private HashMap<String, BuzzHandler<? extends BuzzMessage>> _handlerMaps = new HashMap<>();
 
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "cloudera-01.tambunan.com:9092");
-        props.put("group.id", "ConsumerSimpleType");
-        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://cloudera-01.tambunan.com:8081");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+	public void start() throws Exception {
+		Properties props = new Properties();
 
-        KafkaConsumer<String, String> _consumer = new KafkaConsumer<String, String>(props);
+		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
+		props.put("group.id", "ConsumerSimpleType");
+		props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
+		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
-        _consumer.subscribe(_handlerMaps.keySet());
+		KafkaConsumer<String, String> _consumer = new KafkaConsumer<String, String>(props);
 
-        while (true) {
-            try {
-                // TODO find the asynchronous way of getting the message, remove blocking code !
-                ConsumerRecords<String, String> records = _consumer.poll(Long.MAX_VALUE);
+		_consumer.subscribe(_handlerMaps.keySet());
 
-                for (ConsumerRecord<String, String> record : records) {
+		while (true) {
+			try {
+				// TODO find the asynchronous way of getting the message, remove blocking code !
+				ConsumerRecords<String, String> records = _consumer.poll(Long.MAX_VALUE);
 
-                    String messageType = new String(Arrays.stream(record.headers().toArray()).filter(x -> x.key().equals("message-type")).findFirst().get().value());
+				for (ConsumerRecord<String, String> record : records) {
 
-                    BuzzHandler<? extends BuzzMessage> handler = _handlerMaps.get(messageType);
+					String messageType = new String(Arrays.stream(record.headers().toArray())
+							.filter(x -> x.key().equals("message-type")).findFirst().get().value());
 
-                    BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
+					BuzzHandler<? extends BuzzMessage> handler = _handlerMaps.get(messageType);
 
-                    System.out.println(messageType);
+					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
 
-                    // TODO how to handle this message
-                }
+					System.out.println(messageType);
 
-            } catch (Exception e) {
+					// TODO how to handle this message
+				}
 
-            }
+			} catch (Exception e) {
 
-        }
-    }
+			}
 
-    public <T extends BuzzMessage> void add(String eventorcommand, BuzzHandler<T> handler) {
-        _handlerMaps.put(eventorcommand, handler); // TODO currently only handle one
-    }
+		}
+	}
+
+	public <T extends BuzzMessage> void add(String eventorcommand, BuzzHandler<T> handler) {
+		_handlerMaps.put(eventorcommand, handler); // TODO currently only handle one
+	}
 }
