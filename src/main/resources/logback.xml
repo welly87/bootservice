@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<property name="log_home" value="/logs" />
+	<property name="log_pattern"
+		value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{40} - %msg%n" />
+
+	<appender name="file"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log_home}/bootservice.log</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log_home}/bootservice.%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>5MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+			<maxHistory>7</maxHistory>
+		</rollingPolicy>
+
+		<encoder>
+			<charset>UTF-8</charset>
+			<pattern>${log_pattern}</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="stdout"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>
+				${log_pattern}
+			</pattern>
+		</layout>
+	</appender>
+
+	<logger name="com.tambunan" level="debug" additivity="false">
+		<appender-ref ref="stdout" />
+	</logger>
+
+	<root level="warn">
+		<appender-ref ref="stdout" />
+	</root>
+
+</configuration>
