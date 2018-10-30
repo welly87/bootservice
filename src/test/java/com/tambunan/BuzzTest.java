@@ -5,6 +5,10 @@ import com.tambunan.bus.BootBuzz;
 import com.tambunan.bus.Bus;
 import com.tambunan.bus.BuzzHandler;
 import com.tambunan.bus.BuzzMessage;
+import com.tambunan.handlers.CalculatePayrollHandler;
+import com.tambunan.handlers.EmployeeAttendHandler;
+import com.tambunan.handlers.EmployeeCreatedHandler;
+import com.tambunan.handlers.TaxChangedHandler;
 import com.tambunan.messages.*;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,49 +29,26 @@ public class BuzzTest {
     @Test
     public void should_register_all_interesting_event() throws Exception {
 
-        bus.subscribe("com.tambunan.messages.TaxChanged", new BuzzHandler<BuzzMessage>() {
-            @Override
-            public void handle(BuzzMessage message) {
-                System.out.println("Handling TaxChanged message");
-            }
-        });
+        // TODO should be able to subscribe automatically
 
+        bus.subscribe("com.tambunan.messages.TaxChangedHandler", new TaxChangedHandler());
 
-        bus.subscribe("com.tambunan.messages.EmployeeAttend", new BuzzHandler<BuzzMessage>() {
-            @Override
-            public void handle(BuzzMessage message) {
+        bus.subscribe("com.tambunan.messages.EmployeeAttend", new EmployeeAttendHandler());
 
-                System.out.println("Handling EmployeeAttend message");
-            }
-        });
+        bus.subscribe("com.tambunan.messages.EmployeeCreated", new EmployeeCreatedHandler());
 
-
-        bus.subscribe("com.tambunan.messages.EmployeeCreated", new BuzzHandler<BuzzMessage>() {
-            @Override
-            public void handle(BuzzMessage message) {
-                System.out.println("Handling EmployeeCreated message");
-            }
-        });
-
-        bus.handleCommand("com.tambunan.messages.CalculatePayroll", new BuzzHandler<BuzzMessage>() {
-            @Override
-            public void handle(BuzzMessage message) {
-                CalculatePayroll msg = (CalculatePayroll)message;
-
-                System.out.println(msg.getEmployeeId());
-            }
-        });
+        bus.handleCommand("com.tambunan.messages.CalculatePayroll",new CalculatePayrollHandler());
 
         bus.start();
 
-        bus.send("com.tambunan.messages.CalculatePayroll", new CalculatePayroll("employeeId"));
+        bus.send("com.tambunan.messages.CalculatePayroll", new CalculatePayroll("GuidEmployeeId"));
 
         bus.publish(new PaymentReceived());
 
         Thread.sleep(100000);
     }
 
-//    @Test
+    @Test
     public void should_create_generic_type_object() throws Exception {
 //        assertEquals("", Class.forName("com.tambunan.messages.CalculatePayroll"));
 
