@@ -2,9 +2,9 @@ package com.tambunan.bus;
 
 public interface Bus {
 
-    void subscribe(String eventName, BuzzHandler<BuzzMessage> handler);
+    <T extends BuzzMessage> void subscribe(String eventName, BuzzHandler<T> handler);
 
-    void handleCommand(String commandName, BuzzHandler<BuzzMessage> handler);
+    <T extends BuzzMessage> void handleCommand(String commandName, BuzzHandler<T> handler);
 
     void send(String destination, BuzzMessage cmd);
 
