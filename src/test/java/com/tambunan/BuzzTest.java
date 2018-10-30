@@ -31,7 +31,7 @@ public class BuzzTest {
 
         // TODO should be able to subscribe automatically
 
-        bus.subscribe("com.tambunan.messages.TaxChangedHandler", new TaxChangedHandler());
+        bus.subscribe("com.tambunan.messages.TaxChanged", new TaxChangedHandler());
 
         bus.subscribe("com.tambunan.messages.EmployeeAttend", new EmployeeAttendHandler());
 
