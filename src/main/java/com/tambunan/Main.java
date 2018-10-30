@@ -9,21 +9,23 @@ import org.springframework.context.event.EventListener;
 
 @SpringBootApplication
 public class Main {
-    @Autowired
-    private MessageListeners listener;
+//    @Autowired
+//    private MessageListeners listener;
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(Main.class, args);
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    private void startListener() {
-        new Thread(() -> {
-            try {
-                listener.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
+//    @EventListener(ApplicationReadyEvent.class)
+//    private void startListener() {
+//        // TODO change to executor pool
+//
+//        new Thread(() -> {
+//            try {
+//                listener.start();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }).start();
+//    }
 }

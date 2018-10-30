@@ -14,6 +14,7 @@ import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,8 @@ public class BootBuzz implements Bus {
 
 	private Gson gson = new Gson();
 
-	private MessageListeners listeners = new MessageListeners();
+	@Autowired
+	private MessageListeners listeners; // = new MessageListeners();
 
 	@Value("${bootservice.kafka.servers}")
 	private String servers;
@@ -59,12 +61,12 @@ public class BootBuzz implements Bus {
 	}
 
 	@Override
-	public <T extends BuzzMessage> void subscribe(String eventName, BuzzHandler<T> handler) {
+	public  void subscribe(String eventName, BuzzHandler<BuzzMessage> handler) {
 		listeners.add(eventName, handler);
 	}
 
 	@Override
-	public <T extends BuzzMessage> void handleCommand(String commandName, BuzzHandler<T> handler) {
+	public void handleCommand(String commandName, BuzzHandler<BuzzMessage> handler) {
 		listeners.add(commandName, handler);
 	}
 
@@ -101,10 +103,16 @@ public class BootBuzz implements Bus {
 
 	@Override
 	public void start() {
-		try {
-			listeners.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		// TODO need to change to executor thread pool
+		new Thread(() -> {
+			try {
+				log.debug("bus listener starting...");
+				listeners.start();
+				log.debug("bus listener started...");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}).start();
+
 	}
 }

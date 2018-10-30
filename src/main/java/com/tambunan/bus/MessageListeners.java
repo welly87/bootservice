@@ -25,10 +25,10 @@ public class MessageListeners {
 	@Value("${bootservice.kafka.schemaregistry.url}")
 	private String schemaUrl;
 
-	Gson gson = new Gson();
+	private Gson gson = new Gson();
 
 	// TODO .. we need to change this to Map of <string, List>
-	private HashMap<String, BuzzHandler<? extends BuzzMessage>> _handlerMaps = new HashMap<>();
+	private HashMap<String, BuzzHandler<BuzzMessage>> _handlerMaps = new HashMap<>();
 
 	public void start() throws Exception {
 		Properties props = new Properties();
@@ -40,6 +40,9 @@ public class MessageListeners {
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
 		KafkaConsumer<String, String> _consumer = new KafkaConsumer<String, String>(props);
+
+		if (_handlerMaps.keySet().size() == 0)
+			throw new Exception("you need to subscribe to topics, please register message handler first");
 
 		_consumer.subscribe(_handlerMaps.keySet());
 
@@ -53,23 +56,25 @@ public class MessageListeners {
 					String messageType = new String(Arrays.stream(record.headers().toArray())
 							.filter(x -> x.key().equals("message-type")).findFirst().get().value());
 
-					BuzzHandler<? extends BuzzMessage> handler = _handlerMaps.get(messageType);
+					BuzzHandler<BuzzMessage> handler = _handlerMaps.get(messageType);
+
+					if (handler == null) continue;
 
 					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
 
 					System.out.println(messageType);
 
-					// TODO how to handle this message
+					handler.handle(message);
 				}
 
 			} catch (Exception e) {
-
+				e.printStackTrace();
 			}
 
 		}
 	}
 
-	public <T extends BuzzMessage> void add(String eventorcommand, BuzzHandler<T> handler) {
+	public void add(String eventorcommand, BuzzHandler<BuzzMessage> handler) {
 		_handlerMaps.put(eventorcommand, handler); // TODO currently only handle one
 	}
 }
