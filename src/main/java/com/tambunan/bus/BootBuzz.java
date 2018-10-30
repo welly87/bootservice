@@ -24,95 +24,97 @@ import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
 @Service
 public class BootBuzz implements Bus {
-	private KafkaProducer<String, String> publisher;
+    private KafkaProducer<String, String> publisher;
 
-	private Gson gson = new Gson();
+    private Gson gson = new Gson();
 
-	@Autowired
-	private MessageListeners listeners; // = new MessageListeners();
+    @Autowired
+    private MessageListeners listeners; // = new MessageListeners();
 
-	@Value("${bootservice.kafka.servers}")
-	private String servers;
+    @Value("${bootservice.kafka.servers}")
+    private String servers;
 
-	@Value("${bootservice.kafka.schemaregistry.url}")
-	private String schemaUrl;
+    @Value("${bootservice.kafka.schemaregistry.url}")
+    private String schemaUrl;
 
-	private static final Logger log = LoggerFactory.getLogger(BootBuzz.class);
+    @Value("${bootservice.kafka.producer.acks-config:all}")
+    private String acksConfig;
 
-	public BootBuzz() {
+    @Value("${bootservice.kafka.producer.retries-config:0}")
+    private int retriesConfig;
 
-	}
+    private static final Logger log = LoggerFactory.getLogger(BootBuzz.class);
 
-	@PostConstruct
-	public void postConstruct() {
-		Properties props = new Properties();
+    public BootBuzz() {
 
-		log.debug("Bootstrapping : " + servers);
+    }
 
-		// TODO need to refactor this to properties file
-		props.put("bootstrap.servers", servers);
-		props.put(ProducerConfig.ACKS_CONFIG, "all");
-		props.put(ProducerConfig.RETRIES_CONFIG, 0);
-		props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-		props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-		props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
+    @PostConstruct
+    public void postConstruct() {
+        Properties props = new Properties();
 
-		publisher = new KafkaProducer<String, String>(props);
-	}
+        props.put("bootstrap.servers", servers);
+        props.put(ProducerConfig.ACKS_CONFIG, acksConfig);
+        props.put(ProducerConfig.RETRIES_CONFIG, retriesConfig);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
 
-	@Override
-	public <T extends BuzzMessage> void subscribe(String eventName, BuzzHandler<T> handler) {
-		listeners.add(eventName, handler);
-	}
+        publisher = new KafkaProducer<String, String>(props);
+    }
 
-	@Override
+    @Override
+    public <T extends BuzzMessage> void subscribe(String eventName, BuzzHandler<T> handler) {
+        listeners.add(eventName, handler);
+    }
+
+    @Override
     public <T extends BuzzMessage> void handleCommand(String commandName, BuzzHandler<T> handler) {
         listeners.add(commandName, handler);
     }
 
-	@Override
-	public void send(String destination, BuzzMessage cmd) {
+    @Override
+    public void send(String destination, BuzzMessage cmd) {
 
-		Header header = new RecordHeader("message-type", cmd.getClass().getName().getBytes());
+        Header header = new RecordHeader("message-type", cmd.getClass().getName().getBytes());
 
-		List<Header> headers = new ArrayList<>();
-		headers.add(header);
+        List<Header> headers = new ArrayList<>();
+        headers.add(header);
 
-		publisher.send(new ProducerRecord<String, String>(destination, 0, "", serialize(cmd), headers));
+        publisher.send(new ProducerRecord<String, String>(destination, 0, "", serialize(cmd), headers));
 
-		System.out.println("send : " + cmd.getClass());
-	}
+        System.out.println("send : " + cmd.getClass());
+    }
 
-	private String serialize(BuzzMessage message) {
-		return gson.toJson(message);
-	}
+    private String serialize(BuzzMessage message) {
+        return gson.toJson(message);
+    }
 
-	@Override
-	public void publish(BuzzMessage event) {
+    @Override
+    public void publish(BuzzMessage event) {
 
-		Header header = new RecordHeader("message-type", event.getClass().getName().getBytes());
+        Header header = new RecordHeader("message-type", event.getClass().getName().getBytes());
 
-		List<Header> headers = new ArrayList<>();
-		headers.add(header);
+        List<Header> headers = new ArrayList<>();
+        headers.add(header);
 
-		publisher
-				.send(new ProducerRecord<String, String>(event.getClass().getName(), 0, "", serialize(event), headers));
+        publisher
+                .send(new ProducerRecord<String, String>(event.getClass().getName(), 0, "", serialize(event), headers));
 
-		System.out.println("send : " + event.getClass());
-	}
+        System.out.println("send : " + event.getClass());
+    }
 
-	@Override
-	public void start() {
-		// TODO need to change to executor thread pool
-		new Thread(() -> {
-			try {
-				log.debug("bus listener starting...");
-				listeners.start();
-				log.debug("bus listener started...");
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}).start();
+    @Override
+    public void start() {
+        // Thread pool on listeners.start();
+        try {
+            log.debug("bus listener starting...");
+            listeners.start();
+            log.debug("bus listener started...");
+        } catch (Exception e) {
+            log.error("bus listener exception : " + e.getMessage());
+            e.printStackTrace();
+        }
 
-	}
+    }
 }
