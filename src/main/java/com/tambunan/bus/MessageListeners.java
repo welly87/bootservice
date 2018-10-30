@@ -1,83 +1,69 @@
 package com.tambunan.bus;
 
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import com.google.common.eventbus.EventBus;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.Gson;
+import com.google.common.eventbus.EventBus;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 
 @Component
 public class MessageListeners {
-	
-	@Value("${bootservice.kafka.servers}")
-	private String servers;
 
-	@Value("${bootservice.kafka.schemaregistry.url}")
-	private String schemaUrl;
+    private static final byte MAX_CONCURRENCY = 10;
 
-	private Gson gson = new Gson();
+    private static final byte MIN_CONCURRENCY = 1;
 
-	private EventBus bus = new EventBus();
+    @Value("${bootservice.kafka.servers}")
+    private String servers;
 
-	// TODO .. we need to change this to Map of <string, List>
-	private HashMap<String, BuzzHandler<?>> _handlerMaps = new HashMap<>();
+    @Value("${bootservice.kafka.schemaregistry.url}")
+    private String schemaUrl;
 
-	public void start() throws Exception {
-		Properties props = new Properties();
+    private EventBus bus = new EventBus();
 
-		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
-		props.put("group.id", "ConsumerSimpleType");
-		props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
-		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    // TODO .. we need to change this to Map of <string, List>
+    private HashMap<String, BuzzHandler<?>> _handlerMaps = new HashMap<>();
 
-		KafkaConsumer<String, String> _consumer = new KafkaConsumer<String, String>(props);
+    @Value("${bootservice.kafka.concurrency:1}")
+    private byte concurrencyFactor;
 
-		if (_handlerMaps.keySet().size() == 0)
-			throw new Exception("you need to subscribe to topics, please register message handler first");
+    private ExecutorService executor;
 
-		_consumer.subscribe(_handlerMaps.keySet());
+    public void start() throws Exception {
+        if (_handlerMaps.isEmpty()) {
+            throw new BuzzException("You need to subscribe to topics, please register message handler first");
+        }
 
-		while (true) {
-			try {
-				ConsumerRecords<String, String> records = _consumer.poll(Duration.ofSeconds(5000));
+        if (concurrencyFactor < MIN_CONCURRENCY || concurrencyFactor > MAX_CONCURRENCY) {
+            throw new BuzzException("Concurrency must between " + MIN_CONCURRENCY + " and " + MAX_CONCURRENCY);
+        }
 
-				for (ConsumerRecord<String, String> record : records) {
+        Properties props = new Properties();
 
-					String messageType = new String(Arrays.stream(record.headers().toArray())
-							.filter(x -> x.key().equals("message-type")).findFirst().get().value());
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
+        props.put("group.id", "ConsumerSimpleType");
+        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
-					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
+        this.executor = Executors.newFixedThreadPool(concurrencyFactor);
 
-					System.out.println(messageType);
+        for (int i = 0; i < concurrencyFactor; i++) {
+            this.executor.execute(new BuzzHandlerRunnable(props, _handlerMaps));
+        }
+    }
 
-					bus.post(message);
-				}
+    public <T extends BuzzMessage> void add(String eventOrCommand, BuzzHandler<T> handler) {
+        _handlerMaps.put(eventOrCommand, handler); // TODO currently only handle one
 
-				_consumer.commitSync();
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-		}
-	}
-
-	public <T extends BuzzMessage> void add(String eventOrCommand, BuzzHandler<T> handler) {
-		_handlerMaps.put(eventOrCommand, handler); // TODO currently only handle one
-
-		bus.register(handler);
-	}
+        bus.register(handler);
+    }
 }
