@@ -1,9 +1,11 @@
 package com.tambunan.bus;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 
+import com.google.common.eventbus.EventBus;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -27,8 +29,10 @@ public class MessageListeners {
 
 	private Gson gson = new Gson();
 
+	private EventBus bus = new EventBus();
+
 	// TODO .. we need to change this to Map of <string, List>
-	private HashMap<String, BuzzHandler<BuzzMessage>> _handlerMaps = new HashMap<>();
+	private HashMap<String, BuzzHandler<?>> _handlerMaps = new HashMap<>();
 
 	public void start() throws Exception {
 		Properties props = new Properties();
@@ -48,24 +52,21 @@ public class MessageListeners {
 
 		while (true) {
 			try {
-				// TODO find the asynchronous way of getting the message, remove blocking code !
-				ConsumerRecords<String, String> records = _consumer.poll(Long.MAX_VALUE);
+				ConsumerRecords<String, String> records = _consumer.poll(Duration.ofSeconds(5000));
 
 				for (ConsumerRecord<String, String> record : records) {
 
 					String messageType = new String(Arrays.stream(record.headers().toArray())
 							.filter(x -> x.key().equals("message-type")).findFirst().get().value());
 
-					BuzzHandler<BuzzMessage> handler = _handlerMaps.get(messageType);
-
-					if (handler == null) continue;
-
 					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
 
 					System.out.println(messageType);
 
-					handler.handle(message);
+					bus.post(message);
 				}
+
+				_consumer.commitSync();
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -74,7 +75,9 @@ public class MessageListeners {
 		}
 	}
 
-	public void add(String eventorcommand, BuzzHandler<BuzzMessage> handler) {
-		_handlerMaps.put(eventorcommand, handler); // TODO currently only handle one
+	public <T extends BuzzMessage> void add(String eventOrCommand, BuzzHandler<T> handler) {
+		_handlerMaps.put(eventOrCommand, handler); // TODO currently only handle one
+
+		bus.register(handler);
 	}
 }

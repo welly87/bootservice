@@ -61,14 +61,14 @@ public class BootBuzz implements Bus {
 	}
 
 	@Override
-	public  void subscribe(String eventName, BuzzHandler<BuzzMessage> handler) {
+	public <T extends BuzzMessage> void subscribe(String eventName, BuzzHandler<T> handler) {
 		listeners.add(eventName, handler);
 	}
 
 	@Override
-	public void handleCommand(String commandName, BuzzHandler<BuzzMessage> handler) {
-		listeners.add(commandName, handler);
-	}
+    public <T extends BuzzMessage> void handleCommand(String commandName, BuzzHandler<T> handler) {
+        listeners.add(commandName, handler);
+    }
 
 	@Override
 	public void send(String destination, BuzzMessage cmd) {
