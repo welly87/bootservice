@@ -1,8 +1,8 @@
 package com.tambunan.messages;
 
-import com.tambunan.bus.BuzzMessage;
+import com.tambunan.bus.BuzzCommand;
 
-public class CalculatePayroll implements BuzzMessage {
+public class CalculatePayroll implements BuzzCommand {
     private String employeeId;
 
     public CalculatePayroll(String employeeId) {

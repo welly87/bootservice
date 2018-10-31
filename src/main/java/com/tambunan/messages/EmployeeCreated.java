@@ -1,6 +1,6 @@
 package com.tambunan.messages;
 
-import com.tambunan.bus.BuzzMessage;
+import com.tambunan.bus.BuzzEvent;
 
-public class EmployeeCreated implements BuzzMessage {
+public class EmployeeCreated implements BuzzEvent {
 }
