@@ -59,19 +59,21 @@ public class MessageListeners {
 
 				for (ConsumerRecord<String, String> record : records) {
 
-					String messageType = new String(Arrays.stream(record.headers().toArray())
-							.filter(x -> x.key().equals("message-type")).findFirst().get().value());
-
 					Header[] headers = record.headers().toArray();
 
-//					Arrays.stream(headers).map(x -> new )
+					HashMap<String, String> kafkaHeader = new HashMap<>();
 
-					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
+					Arrays.stream(headers).forEach(x -> {
+                        kafkaHeader.put(x.key(), new String(x.value()));
+                    });
 
-//					BuzzHeader header = new BuzzHeader(record.key(), record.offset(), record.partition(), record.timestamp(), record.topic());
-					BuzzEnvelop envelop = new BuzzEnvelop(message, new BuzzContextImpl(new BuzzHeader(), bus));
+					BuzzHeader header = new BuzzHeader(record.key(), record.offset(), record.partition(), record.timestamp(), record.topic(), kafkaHeader);
 
-					System.out.println(messageType);
+					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(header.getMessageType()));
+
+					BuzzEnvelop envelop = new BuzzEnvelop(message, new BuzzContextImpl(header, bus));
+
+					System.out.println(header.getMessageType());
 
 					eventBus.post(envelop);
 				}

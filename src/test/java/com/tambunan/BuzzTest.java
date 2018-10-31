@@ -4,7 +4,7 @@ import com.tambunan.bus.Bus;
 import com.tambunan.handlers.CalculatePayrollHandler;
 import com.tambunan.handlers.EmployeeAttendHandler;
 import com.tambunan.handlers.EmployeeCreatedHandler;
-import com.tambunan.handlers.TaxChangedHandler;
+import com.tambunan.handlers.PaymentReceivedHandler;
 import com.tambunan.messages.CalculatePayroll;
 import com.tambunan.messages.PaymentReceived;
 import org.junit.Test;
@@ -24,13 +24,13 @@ public class BuzzTest {
 
         // TODO should be able to subscribe automatically
 
-        bus.subscribe("com.tambunan.messages.TaxChanged", new TaxChangedHandler());
-
-        bus.subscribe("com.tambunan.messages.EmployeeAttend", new EmployeeAttendHandler());
+//        bus.subscribe("com.tambunan.messages.PaymentReceived", new PaymentReceivedHandler());
 //
-        bus.subscribe("com.tambunan.messages.EmployeeCreated", new EmployeeCreatedHandler());
-
-        bus.handleCommand("com.tambunan.messages.CalculatePayroll", new CalculatePayrollHandler());
+//        bus.subscribe("com.tambunan.messages.EmployeeAttend", new EmployeeAttendHandler());
+//
+//        bus.subscribe("com.tambunan.messages.EmployeeCreated", new EmployeeCreatedHandler());
+//
+//        bus.handleCommand("com.tambunan.messages.CalculatePayroll", new CalculatePayrollHandler());
 
         bus.start();
 

@@ -2,6 +2,7 @@ package com.tambunan.bus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
@@ -29,7 +31,7 @@ public class BootBuzz implements Bus {
 	private Gson gson = new Gson();
 
 	@Autowired
-	private MessageListeners listeners; // = new MessageListeners();
+	private MessageListeners listeners;
 
 	@Value("${bootservice.kafka.servers}")
 	private String servers;
@@ -38,6 +40,9 @@ public class BootBuzz implements Bus {
 	private String schemaUrl;
 
 	private static final Logger log = LoggerFactory.getLogger(BootBuzz.class);
+
+	@Autowired
+	private ApplicationContext context;
 
 	@PostConstruct
 	public void postConstruct() {
@@ -55,6 +60,14 @@ public class BootBuzz implements Bus {
 
 		publisher = new KafkaProducer<String, String>(props);
 
+		Map<String, Object> result = context.getBeansWithAnnotation(BuzzSubscribe.class);
+		result.forEach((k, v) -> {
+			BuzzHandler buzzHandler = (BuzzHandler) v;
+			// FIXME should get from annotation value : "topic"
+
+			subscribe("com.tambunan.messages.CalculatePayroll", buzzHandler);
+		});
+
 		listeners.setBus(this);
 	}
 
@@ -71,7 +84,7 @@ public class BootBuzz implements Bus {
 	@Override
 	public void send(String destination, BuzzMessage cmd) {
 
-		Header header = new RecordHeader("message-type", cmd.getClass().getName().getBytes());
+		Header header = new RecordHeader("MessageType", cmd.getClass().getName().getBytes());
 
 		List<Header> headers = new ArrayList<>();
 		headers.add(header);
@@ -86,9 +99,9 @@ public class BootBuzz implements Bus {
 	}
 
 	@Override
-	public void publish(BuzzMessage event) {
+	public void publish(BuzzEvent event) {
 
-		Header header = new RecordHeader("message-type", event.getClass().getName().getBytes());
+		Header header = new RecordHeader("MessageType", event.getClass().getName().getBytes());
 
 		List<Header> headers = new ArrayList<>();
 		headers.add(header);
@@ -96,7 +109,7 @@ public class BootBuzz implements Bus {
 		publisher
 				.send(new ProducerRecord<String, String>(event.getClass().getName(), 0, "", serialize(event), headers));
 
-		System.out.println("send : " + event.getClass());
+		System.out.println("publish : " + event.getClass());
 	}
 
 	@Override
