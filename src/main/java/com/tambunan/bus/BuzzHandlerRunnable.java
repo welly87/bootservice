@@ -11,7 +11,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.eventbus.EventBus;
 import com.google.gson.Gson;
 
 public class BuzzHandlerRunnable implements Runnable {
@@ -21,7 +20,6 @@ public class BuzzHandlerRunnable implements Runnable {
     private KafkaConsumer<String, String> kafkaConsumer;
     private HashMap<String, BuzzHandler<?>> handlerMaps;
     private Gson gson = new Gson();
-    private EventBus bus = new EventBus();
 
     public BuzzHandlerRunnable(Properties props, HashMap<String, BuzzHandler<?>> handlerMaps) {
         this.kafkaConsumer = new KafkaConsumer<>(props);
@@ -33,6 +31,7 @@ public class BuzzHandlerRunnable implements Runnable {
 
     @Override
     public void run() {
+        log.debug("[BuzzHandler] run");
         while (true) {
             try {
                 ConsumerRecords<String, String> records = kafkaConsumer.poll(Duration.ofSeconds(5000));
@@ -46,7 +45,7 @@ public class BuzzHandlerRunnable implements Runnable {
 
                     System.out.println(messageType);
 
-                    bus.post(message);
+                    MessageListeners.bus.post(message);
                 }
 
                 kafkaConsumer.commitSync();

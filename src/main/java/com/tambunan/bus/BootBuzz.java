@@ -69,8 +69,9 @@ public class BootBuzz implements Bus {
 
         Map<String, Object> result = context.getBeansWithAnnotation(BuzzSubscribe.class);
         result.forEach((k, v) -> {
-            // TODO subscribe bus here. Need casting from object to BuzzHandler?
-            // this.bus.subscribe()
+            BuzzHandler buzzHandler = (BuzzHandler) v;
+            // FIXME should get from annotation value : "topic"
+            subscribe("com.tambunan.messages.CalculatePayroll", buzzHandler);
         });
     }
 
