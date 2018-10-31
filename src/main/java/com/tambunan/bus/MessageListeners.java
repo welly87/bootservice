@@ -10,6 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -61,8 +62,13 @@ public class MessageListeners {
 					String messageType = new String(Arrays.stream(record.headers().toArray())
 							.filter(x -> x.key().equals("message-type")).findFirst().get().value());
 
+					Header[] headers = record.headers().toArray();
+
+//					Arrays.stream(headers).map(x -> new )
+
 					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
 
+//					BuzzHeader header = new BuzzHeader(record.key(), record.offset(), record.partition(), record.timestamp(), record.topic());
 					BuzzEnvelop envelop = new BuzzEnvelop(message, new BuzzContextImpl(new BuzzHeader(), bus));
 
 					System.out.println(messageType);
