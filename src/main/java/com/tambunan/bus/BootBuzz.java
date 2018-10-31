@@ -2,6 +2,7 @@ package com.tambunan.bus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
@@ -45,6 +47,9 @@ public class BootBuzz implements Bus {
 
     private static final Logger log = LoggerFactory.getLogger(BootBuzz.class);
 
+    @Autowired
+    private ApplicationContext context;
+
     public BootBuzz() {
 
     }
@@ -61,6 +66,13 @@ public class BootBuzz implements Bus {
         props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
 
         publisher = new KafkaProducer<String, String>(props);
+
+        Map<String, Object> result = context.getBeansWithAnnotation(BuzzSubscribe.class);
+        result.forEach((k, v) -> {
+            BuzzHandler buzzHandler = (BuzzHandler) v;
+            // FIXME should get from annotation value : "topic"
+            subscribe("com.tambunan.messages.CalculatePayroll", buzzHandler);
+        });
     }
 
     @Override

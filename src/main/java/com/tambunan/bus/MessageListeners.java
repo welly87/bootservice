@@ -27,7 +27,7 @@ public class MessageListeners {
     @Value("${bootservice.kafka.schemaregistry.url}")
     private String schemaUrl;
 
-    private EventBus bus = new EventBus();
+    static EventBus bus = new EventBus();
 
     // TODO .. we need to change this to Map of <string, List>
     private HashMap<String, BuzzHandler<?>> _handlerMaps = new HashMap<>();
