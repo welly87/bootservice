@@ -21,12 +21,12 @@ public class BuzzContextImpl implements BuzzContext {
     }
 
     @Override
-    public void send(BuzzMessage message) {
-
+    public void send(BuzzCommand message) {
+        bus.send(message.getClass().getPackage().getName(), message);
     }
 
     @Override
-    public void publish(BuzzMessage message) {
-
+    public void publish(BuzzEvent message) {
+        bus.publish(message);
     }
 }
