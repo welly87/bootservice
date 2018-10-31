@@ -1,9 +1,14 @@
 package com.tambunan.handlers;
 
+import org.springframework.stereotype.Component;
+
 import com.google.common.eventbus.Subscribe;
 import com.tambunan.bus.BuzzHandler;
+import com.tambunan.bus.BuzzSubscribe;
 import com.tambunan.messages.CalculatePayroll;
 
+@Component
+@BuzzSubscribe
 public class CalculatePayrollHandler implements BuzzHandler<CalculatePayroll> {
 
     @Override
