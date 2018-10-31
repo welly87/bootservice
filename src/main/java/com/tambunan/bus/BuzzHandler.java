@@ -6,10 +6,11 @@ public abstract class BuzzHandler<T extends BuzzMessage> {
 
     @Subscribe
     public void handle(BuzzEnvelop envelop) {
+        // TODO how to send just to one handler, currently sent to all message handler
         try {
             handle((T) envelop.getMessage(), envelop.getContext());
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+//            System.out.println(e.getMessage());
         }
     }
 
