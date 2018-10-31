@@ -1,5 +1,6 @@
 package com.tambunan.bus;
 
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -110,10 +111,22 @@ public class MessageListeners {
 		Map<String, Object> result = context.getBeansWithAnnotation(BuzzSubscribe.class);
 		result.forEach((k, v) -> {
 			BuzzHandler buzzHandler = (BuzzHandler) v;
-			// FIXME should get from annotation value : "topic"
-			System.out.println("handler found : " + buzzHandler.getClass());
-			add("com.tambunan.messages.CalculatePayroll", buzzHandler);
-		});
+			String topic = getTopic(v);
+            System.out.println("handler found : " + buzzHandler.getClass() + " -> " + "topic : " + topic);
 
+			add(topic, buzzHandler);
+		});
 	}
+
+    private String getTopic(Object v) {
+
+        Class<?> _class = v.getClass();
+
+        if(_class.isAnnotationPresent(BuzzSubscribe.class)) {
+            BuzzSubscribe ta = _class.getAnnotation(BuzzSubscribe.class);
+            return ta.topic();
+        }
+
+        return "";
+    }
 }

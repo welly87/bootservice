@@ -52,8 +52,6 @@ public class BootBuzz implements Bus {
 
 		publisher = new KafkaProducer<String, String>(props);
 
-//		listeners.scan();
-
 		listeners.setBus(this);
 	}
 
