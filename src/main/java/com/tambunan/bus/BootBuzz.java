@@ -1,12 +1,7 @@
 package com.tambunan.bus;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import javax.annotation.PostConstruct;
-
+import com.google.gson.Gson;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -17,12 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import com.google.gson.Gson;
-
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 @Service
 public class BootBuzz implements Bus {
@@ -41,9 +36,6 @@ public class BootBuzz implements Bus {
 
 	private static final Logger log = LoggerFactory.getLogger(BootBuzz.class);
 
-	@Autowired
-	private ApplicationContext context;
-
 	@PostConstruct
 	public void postConstruct() {
 		Properties props = new Properties();
@@ -60,13 +52,7 @@ public class BootBuzz implements Bus {
 
 		publisher = new KafkaProducer<String, String>(props);
 
-		Map<String, Object> result = context.getBeansWithAnnotation(BuzzSubscribe.class);
-		result.forEach((k, v) -> {
-			BuzzHandler buzzHandler = (BuzzHandler) v;
-			// FIXME should get from annotation value : "topic"
-
-			subscribe("com.tambunan.messages.CalculatePayroll", buzzHandler);
-		});
+//		listeners.scan();
 
 		listeners.setBus(this);
 	}

@@ -3,6 +3,7 @@ package com.tambunan.bus;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import com.google.common.eventbus.EventBus;
@@ -12,7 +13,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
@@ -37,7 +40,13 @@ public class MessageListeners {
 
 	private Bus bus;
 
+	@Autowired
+	private ApplicationContext context;
+
 	public void start() throws Exception {
+
+		scanAllMessageHandler();
+
 		Properties props = new Properties();
 
 		props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
@@ -46,16 +55,16 @@ public class MessageListeners {
 		props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
-		KafkaConsumer<String, String> _consumer = new KafkaConsumer<String, String>(props);
+		KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(props);
 
 		if (_handlerMaps.keySet().size() == 0)
 			throw new Exception("you need to subscribe to topics, please register message handler first");
 
-		_consumer.subscribe(_handlerMaps.keySet());
+		consumer.subscribe(_handlerMaps.keySet());
 
 		while (true) {
 			try {
-				ConsumerRecords<String, String> records = _consumer.poll(Duration.ofSeconds(5000));
+				ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5000));
 
 				for (ConsumerRecord<String, String> record : records) {
 
@@ -78,7 +87,7 @@ public class MessageListeners {
 					eventBus.post(envelop);
 				}
 
-				_consumer.commitSync();
+				consumer.commitSync();
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -95,5 +104,16 @@ public class MessageListeners {
 
 	public void setBus(Bus eventBus) {
 		this.bus = eventBus;
+	}
+
+	private void scanAllMessageHandler() {
+		Map<String, Object> result = context.getBeansWithAnnotation(BuzzSubscribe.class);
+		result.forEach((k, v) -> {
+			BuzzHandler buzzHandler = (BuzzHandler) v;
+			// FIXME should get from annotation value : "topic"
+			System.out.println("handler found : " + buzzHandler.getClass());
+			add("com.tambunan.messages.CalculatePayroll", buzzHandler);
+		});
+
 	}
 }
