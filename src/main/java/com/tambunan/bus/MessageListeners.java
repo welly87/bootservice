@@ -29,10 +29,12 @@ public class MessageListeners {
 
 	private Gson gson = new Gson();
 
-	private EventBus bus = new EventBus();
+	private EventBus eventBus = new EventBus();
 
 	// TODO .. we need to change this to Map of <string, List>
 	private HashMap<String, BuzzHandler<?>> _handlerMaps = new HashMap<>();
+
+	private Bus bus;
 
 	public void start() throws Exception {
 		Properties props = new Properties();
@@ -61,9 +63,11 @@ public class MessageListeners {
 
 					BuzzMessage message = (BuzzMessage) gson.fromJson(record.value(), Class.forName(messageType));
 
+					BuzzEnvelop envelop = new BuzzEnvelop(message, new BuzzContextImpl(new BuzzHeader(), bus));
+
 					System.out.println(messageType);
 
-					bus.post(message);
+					eventBus.post(envelop);
 				}
 
 				_consumer.commitSync();
@@ -78,6 +82,10 @@ public class MessageListeners {
 	public <T extends BuzzMessage> void add(String eventOrCommand, BuzzHandler<T> handler) {
 		_handlerMaps.put(eventOrCommand, handler); // TODO currently only handle one
 
-		bus.register(handler);
+		eventBus.register(handler);
+	}
+
+	public void setBus(Bus eventBus) {
+		this.bus = eventBus;
 	}
 }

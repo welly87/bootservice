@@ -39,10 +39,6 @@ public class BootBuzz implements Bus {
 
 	private static final Logger log = LoggerFactory.getLogger(BootBuzz.class);
 
-	public BootBuzz() {
-
-	}
-
 	@PostConstruct
 	public void postConstruct() {
 		Properties props = new Properties();
@@ -58,6 +54,8 @@ public class BootBuzz implements Bus {
 		props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaUrl);
 
 		publisher = new KafkaProducer<String, String>(props);
+
+		listeners.setBus(this);
 	}
 
 	@Override

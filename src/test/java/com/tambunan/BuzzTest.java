@@ -27,7 +27,7 @@ public class BuzzTest {
         bus.subscribe("com.tambunan.messages.TaxChanged", new TaxChangedHandler());
 
         bus.subscribe("com.tambunan.messages.EmployeeAttend", new EmployeeAttendHandler());
-
+//
         bus.subscribe("com.tambunan.messages.EmployeeCreated", new EmployeeCreatedHandler());
 
         bus.handleCommand("com.tambunan.messages.CalculatePayroll", new CalculatePayrollHandler());
@@ -40,6 +40,4 @@ public class BuzzTest {
 
         Thread.sleep(100000);
     }
-
-
 }
