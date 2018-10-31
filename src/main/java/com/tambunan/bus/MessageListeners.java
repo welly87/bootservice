@@ -1,13 +1,8 @@
 package com.tambunan.bus;
 
-import java.lang.reflect.Method;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
 import com.google.common.eventbus.EventBus;
+import com.google.gson.Gson;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -19,9 +14,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.Gson;
-
-import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 @Component
 public class MessageListeners {
@@ -119,14 +116,11 @@ public class MessageListeners {
 	}
 
     private String getTopic(Object v) {
-
         Class<?> _class = v.getClass();
-
         if(_class.isAnnotationPresent(BuzzSubscribe.class)) {
             BuzzSubscribe ta = _class.getAnnotation(BuzzSubscribe.class);
             return ta.topic();
         }
-
         return "";
     }
 }
