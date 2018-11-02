@@ -1,8 +1,8 @@
 package com.tambunan.messages;
 
-import com.tambunan.bus.BuzzCommand;
+import com.tambunan.bus.BuzzMessage;
 
-public class CreateUser implements BuzzCommand {
+public class CreateUser implements BuzzMessage {
     private String id;
 
     private String name;

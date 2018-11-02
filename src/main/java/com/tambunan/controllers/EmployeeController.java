@@ -19,7 +19,7 @@ public class EmployeeController {
     @RequestMapping("/")
     String home() {
 
-        _buzz.send("com.payroll.CalculatePayroll", new CreateUser("uuid", "Welly"));
+        _buzz.publish(new CreateUser("uuid", "Welly"));
 
         return "Hello";
     }

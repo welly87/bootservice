@@ -8,7 +8,7 @@ public interface Bus {
 
     void send(String destination, BuzzMessage cmd);
 
-    void publish(BuzzEvent event);
+    void publish(BuzzMessage event);
 
     void start();
 }

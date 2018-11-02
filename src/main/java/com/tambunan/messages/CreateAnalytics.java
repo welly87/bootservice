@@ -1,6 +1,6 @@
 package com.tambunan.messages;
 
-import com.tambunan.bus.BuzzCommand;
+import com.tambunan.bus.BuzzMessage;
 
-public class CreateAnalytics implements BuzzCommand {
+public class CreateAnalytics implements BuzzMessage {
 }

@@ -1,16 +1,16 @@
 package com.tambunan.handlers;
 
-import com.tambunan.bus.BuzzContext;
-import com.tambunan.bus.BuzzHandler;
-import com.tambunan.bus.BuzzSubscribe;
+import com.google.common.eventbus.Subscribe;
 import com.tambunan.messages.CreateUser;
+import com.tambunan.bus.BuzzHandler;
 import org.springframework.stereotype.Component;
 
-@BuzzSubscribe(topic = "com.tambunan.messages.CreateEmployee")
-public class CreateEmployeeHandler extends BuzzHandler<CreateUser> {
+@Component
+public class CreateEmployeeHandler implements BuzzHandler<CreateUser> {
 
     @Override
-    public void handle(CreateUser message, BuzzContext context) {
+    @Subscribe
+    public void handle(CreateUser message) {
         System.out.println(message.getId());
         System.out.println(message.getName());
     }
